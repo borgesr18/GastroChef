@@ -3,7 +3,10 @@
 import React, { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Card, CardHeader, CardContent } from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import { BarChart3, Package, FileText, Factory, ShoppingCart, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
 
 interface DashboardStats {
   insumos: number
@@ -65,7 +68,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-gray-600">Carregando dashboard...</p>
+            <p className="text-slate-600">Carregando dashboard...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -74,148 +77,196 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-slate-600 mt-1">Visão geral do sistema GastroChef</p>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-slate-600 mt-2">Visão geral do sistema GastroChef</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 text-sm text-slate-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Sistema Online</span>
+            </div>
+          </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-            {error}
-          </div>
+          <Card variant="outlined" className="border-red-200 bg-red-50">
+            <CardContent className="flex items-center space-x-3 text-red-700">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+              <span>{error}</span>
+            </CardContent>
+          </Card>
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card variant="elevated" hover className="group">
+            <CardContent className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                <Package className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Insumos</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.insumos}</p>
+              <div>
+                <p className="text-sm font-medium text-slate-600">Insumos</p>
+                <p className="text-2xl font-bold text-slate-900">{stats.insumos}</p>
+                <p className="text-xs text-slate-500">Cadastrados</p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FileText className="h-6 w-6 text-green-600" />
+          <Card variant="elevated" hover className="group">
+            <CardContent className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                <FileText className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Fichas Técnicas</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.fichasTecnicas}</p>
+              <div>
+                <p className="text-sm font-medium text-slate-600">Fichas Técnicas</p>
+                <p className="text-2xl font-bold text-slate-900">{stats.fichasTecnicas}</p>
+                <p className="text-xs text-slate-500">Receitas</p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Factory className="h-6 w-6 text-purple-600" />
+          <Card variant="elevated" hover className="group">
+            <CardContent className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                <Factory className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Produções</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.producoes}</p>
+              <div>
+                <p className="text-sm font-medium text-slate-600">Produções</p>
+                <p className="text-2xl font-bold text-slate-900">{stats.producoes}</p>
+                <p className="text-xs text-slate-500">Registradas</p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <ShoppingCart className="h-6 w-6 text-orange-600" />
+          <Card variant="elevated" hover className="group">
+            <CardContent className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                <ShoppingCart className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Produtos</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.produtos}</p>
+              <div>
+                <p className="text-sm font-medium text-slate-600">Produtos</p>
+                <p className="text-2xl font-bold text-slate-900">{stats.produtos}</p>
+                <p className="text-xs text-slate-500">Finais</p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Quick Actions */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Ações Rápidas</h3>
-            <div className="space-y-3">
-              <a
-                href="/dashboard/insumos"
-                className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                <Package className="h-5 w-5 text-blue-600 mr-3" />
-                <span className="text-sm font-medium text-gray-900">Cadastrar Insumo</span>
-              </a>
-              <a
-                href="/dashboard/fichas-tecnicas"
-                className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                <FileText className="h-5 w-5 text-green-600 mr-3" />
-                <span className="text-sm font-medium text-gray-900">Nova Ficha Técnica</span>
-              </a>
-              <a
-                href="/dashboard/producao"
-                className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-              >
-                <Factory className="h-5 w-5 text-purple-600 mr-3" />
-                <span className="text-sm font-medium text-gray-900">Registrar Produção</span>
-              </a>
-            </div>
-          </div>
+          <Card variant="elevated">
+            <CardHeader 
+              title="Ações Rápidas" 
+              subtitle="Acesse rapidamente as funcionalidades principais"
+            />
+            <CardContent className="space-y-3">
+              <Link href="/dashboard/insumos">
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  icon={Package} 
+                  className="justify-start h-12 text-left"
+                >
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Cadastrar Insumo</div>
+                    <div className="text-xs text-slate-500">Adicionar novo ingrediente</div>
+                  </div>
+                </Button>
+              </Link>
+              
+              <Link href="/dashboard/fichas-tecnicas">
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  icon={FileText} 
+                  className="justify-start h-12 text-left"
+                >
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Nova Ficha Técnica</div>
+                    <div className="text-xs text-slate-500">Criar nova receita</div>
+                  </div>
+                </Button>
+              </Link>
+              
+              <Link href="/dashboard/producao">
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  icon={Factory} 
+                  className="justify-start h-12 text-left"
+                >
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Registrar Produção</div>
+                    <div className="text-xs text-slate-500">Controlar produção</div>
+                  </div>
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
 
-          {/* Status */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Status do Sistema</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center">
-                  <div className="h-2 w-2 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-900">Sistema Online</span>
+          {/* Status do Sistema */}
+          <Card variant="elevated">
+            <CardHeader 
+              title="Status do Sistema" 
+              subtitle="Informações importantes e alertas"
+            />
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">Sistema Online</span>
                 </div>
                 <span className="text-xs text-green-600 font-medium">Ativo</span>
               </div>
               
               {stats.insumos === 0 && (
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 mr-3" />
-                    <span className="text-sm text-gray-900">Nenhum insumo cadastrado</span>
+                <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <div className="flex items-center space-x-3">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-800">Nenhum insumo cadastrado</span>
                   </div>
-                  <span className="text-xs text-yellow-600 font-medium">Atenção</span>
+                  <span className="text-xs text-amber-600 font-medium">Atenção</span>
                 </div>
               )}
               
               {stats.fichasTecnicas === 0 && (
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 mr-3" />
-                    <span className="text-sm text-gray-900">Nenhuma ficha técnica criada</span>
+                <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <div className="flex items-center space-x-3">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-800">Nenhuma ficha técnica criada</span>
                   </div>
-                  <span className="text-xs text-yellow-600 font-medium">Atenção</span>
+                  <span className="text-xs text-amber-600 font-medium">Atenção</span>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Chart Placeholder */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Resumo de Atividades</h3>
-          <div className="h-64 flex items-center justify-center text-gray-500">
-            <div className="text-center">
-              <BarChart3 className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm">Gráficos serão exibidos quando houver mais dados</p>
-              <p className="text-xs text-gray-400 mt-1">
+        {/* Resumo de Atividades */}
+        <Card variant="elevated">
+          <CardHeader 
+            title="Resumo de Atividades" 
+            subtitle="Gráficos serão exibidos quando houver mais dados"
+          />
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <BarChart3 className="h-16 w-16 text-slate-300 mb-4" />
+              <p className="text-slate-500 text-lg font-medium">Gráficos serão exibidos quando houver mais dados</p>
+              <p className="text-slate-400 text-sm mt-2">
                 Comece cadastrando insumos e criando fichas técnicas
               </p>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )
 }
+

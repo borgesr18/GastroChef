@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Modal from '@/components/ui/Modal'
-import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import { Card, CardHeader, CardContent } from '@/components/ui/Card'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
+import { Package, Plus, Search, Edit, Trash2, Filter, Download, Upload } from 'lucide-react'
 import { convertFormDataToNumbers } from '@/lib/form-utils'
 
 interface Insumo {
@@ -165,7 +169,6 @@ export default function InsumosPage() {
       })
     }
     setIsModalOpen(true)
-    setError('')
   }
 
   const handleCloseModal = () => {
@@ -180,34 +183,37 @@ export default function InsumosPage() {
     setError('')
 
     try {
-      const url = editingInsumo ? `/api/insumos/${editingInsumo.id}` : '/api/insumos'
-      const method = editingInsumo ? 'PUT' : 'POST'
-
-      const convertedData = convertFormDataToNumbers(formData, [
-        'pesoLiquidoGramas', 
+      const processedData = convertFormDataToNumbers(formData, [
+        'pesoLiquidoGramas',
         'precoUnidade',
         'calorias',
-        'proteinas', 
+        'proteinas',
         'carboidratos',
         'gorduras',
         'fibras',
         'sodio'
       ])
 
+      const url = editingInsumo ? `/api/insumos/${editingInsumo.id}` : '/api/insumos'
+      const method = editingInsumo ? 'PUT' : 'POST'
+
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(convertedData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(processedData),
       })
 
       if (response.ok) {
+        await fetchInsumos()
         handleCloseModal()
-        fetchInsumos()
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Erro ao salvar insumo')
       }
-    } catch {
+    } catch (error) {
+      console.error('Error saving insumo:', error)
       setError('Erro ao salvar insumo')
     } finally {
       setLoading(false)
@@ -218,12 +224,18 @@ export default function InsumosPage() {
     if (!confirm('Tem certeza que deseja excluir este insumo?')) return
 
     try {
-      const response = await fetch(`/api/insumos/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/insumos/${id}`, {
+        method: 'DELETE',
+      })
+
       if (response.ok) {
-        fetchInsumos()
+        await fetchInsumos()
+      } else {
+        alert('Erro ao excluir insumo')
       }
     } catch (error) {
       console.error('Error deleting insumo:', error)
+      alert('Erro ao excluir insumo')
     }
   }
 
@@ -235,352 +247,312 @@ export default function InsumosPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Package className="h-6 w-6 text-gray-600 mr-2" />
-            <h1 className="text-2xl font-bold text-gray-900">Insumos</h1>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+              Insumos
+            </h1>
+            <p className="text-slate-600 mt-2">Gerencie os ingredientes e matérias-primas</p>
           </div>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Insumo
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Buscar insumos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Marca
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Categoria
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Peso Líquido
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Preço
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Custo/g
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredInsumos.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                      {searchTerm ? 'Nenhum insumo encontrado.' : 'Nenhum insumo cadastrado. Clique em "Novo Insumo" para começar.'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredInsumos.map((insumo) => (
-                    <tr key={insumo.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {insumo.nome}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {insumo.marca || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {insumo.fornecedorRel?.nome || insumo.fornecedor || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {insumo.categoria.nome}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {insumo.pesoLiquidoGramas}g
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        R$ {insumo.precoUnidade.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        R$ {(insumo.precoUnidade / insumo.pesoLiquidoGramas).toFixed(4)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleOpenModal(insumo)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(insumo.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          
+          <div className="flex items-center gap-3">
+            <Button variant="outline" icon={Filter} size="sm">
+              Filtros
+            </Button>
+            <Button variant="outline" icon={Download} size="sm">
+              Exportar
+            </Button>
+            <Button 
+              variant="primary" 
+              icon={Plus} 
+              onClick={() => handleOpenModal()}
+            >
+              Novo Insumo
+            </Button>
           </div>
         </div>
-      </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        title={editingInsumo ? 'Editar Insumo' : 'Novo Insumo'}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+        {/* Search and Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <Input
+              icon={Search}
+              placeholder="Buscar insumos por nome, marca ou categoria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
+            />
+          </div>
+          
+          <Card variant="elevated">
+            <CardContent className="text-center">
+              <div className="text-2xl font-bold text-slate-900">{insumos.length}</div>
+              <div className="text-sm text-slate-600">Total de insumos</div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome *
-              </label>
-              <input
-                type="text"
+        {/* Table */}
+        <Card variant="elevated">
+          <CardHeader title="Lista de Insumos" />
+          <CardContent padding="none">
+            {filteredInsumos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Package className="h-16 w-16 text-slate-300 mb-4" />
+                <p className="text-slate-500 text-lg font-medium">
+                  {searchTerm ? 'Nenhum insumo encontrado' : 'Nenhum insumo cadastrado'}
+                </p>
+                <p className="text-slate-400 text-sm mt-2">
+                  {searchTerm ? 'Tente ajustar sua busca' : 'Clique em "Novo Insumo" para começar'}
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Marca</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Peso Líquido</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Custo/g</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredInsumos.map((insumo) => (
+                    <TableRow key={insumo.id}>
+                      <TableCell>
+                        <div className="font-medium text-slate-900">{insumo.nome}</div>
+                        {insumo.fornecedorRel && (
+                          <div className="text-xs text-slate-500">{insumo.fornecedorRel.nome}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-600">{insumo.marca || '-'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {insumo.categoria.nome}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-900 font-medium">
+                          {insumo.pesoLiquidoGramas}{insumo.unidadeCompra.simbolo}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-900 font-medium">
+                          R$ {insumo.precoUnidade.toFixed(2)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-600">
+                          R$ {(insumo.precoUnidade / insumo.pesoLiquidoGramas).toFixed(4)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Edit}
+                            onClick={() => handleOpenModal(insumo)}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Trash2}
+                            onClick={() => handleDelete(insumo.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          title={editingInsumo ? 'Editar Insumo' : 'Novo Insumo'}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Nome *"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 required
+                fullWidth
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Marca
-              </label>
-              <input
-                type="text"
+              <Input
+                label="Marca"
                 value={formData.marca}
                 onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                fullWidth
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fornecedor
-              </label>
-              <select
-                value={formData.fornecedorId}
-                onChange={(e) => setFormData({ ...formData, fornecedorId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Selecione um fornecedor</option>
-                {fornecedores.map((fornecedor) => (
-                  <option key={fornecedor.id} value={fornecedor.id}>
-                    {fornecedor.nome}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">
-                Não encontrou o fornecedor? <a href="/dashboard/fornecedores" className="text-blue-600 hover:text-blue-800">Cadastre aqui</a>
-              </p>
-            </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Categoria *
+                </label>
+                <select
+                  value={formData.categoriaId}
+                  onChange={(e) => setFormData({ ...formData, categoriaId: e.target.value })}
+                  required
+                  className="block w-full px-4 py-3 text-slate-900 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categorias.map((categoria) => (
+                    <option key={categoria.id} value={categoria.id}>
+                      {categoria.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Categoria *
-              </label>
-              <select
-                value={formData.categoriaId}
-                onChange={(e) => setFormData({ ...formData, categoriaId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Selecione uma categoria</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Unidade de Compra *
+                </label>
+                <select
+                  value={formData.unidadeCompraId}
+                  onChange={(e) => setFormData({ ...formData, unidadeCompraId: e.target.value })}
+                  required
+                  className="block w-full px-4 py-3 text-slate-900 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Selecione uma unidade</option>
+                  {unidades.map((unidade) => (
+                    <option key={unidade.id} value={unidade.id}>
+                      {unidade.nome} ({unidade.simbolo})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Unidade de Compra *
-              </label>
-              <select
-                value={formData.unidadeCompraId}
-                onChange={(e) => setFormData({ ...formData, unidadeCompraId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Selecione uma unidade</option>
-                {unidades.map((unidade) => (
-                  <option key={unidade.id} value={unidade.id}>
-                    {unidade.nome} ({unidade.simbolo})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Peso Líquido (gramas) *
-              </label>
-              <input
+              <Input
+                label="Peso Líquido (g) *"
                 type="number"
                 step="0.01"
                 value={formData.pesoLiquidoGramas}
                 onChange={(e) => setFormData({ ...formData, pesoLiquidoGramas: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 required
+                fullWidth
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Preço da Unidade (R$) *
-              </label>
-              <input
+              <Input
+                label="Preço por Unidade (R$) *"
                 type="number"
                 step="0.01"
                 value={formData.precoUnidade}
                 onChange={(e) => setFormData({ ...formData, precoUnidade: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 required
+                fullWidth
               />
             </div>
-          </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Informações Nutricionais (por 100g) - Opcional
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Calorias (kcal)
-                </label>
-                <input
+            {/* Informações Nutricionais */}
+            <div className="border-t border-slate-200 pt-6">
+              <h3 className="text-lg font-medium text-slate-900 mb-4">
+                Informações Nutricionais (opcionais)
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <Input
+                  label="Calorias (kcal/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.calorias}
                   onChange={(e) => setFormData({ ...formData, calorias: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 250"
+                  fullWidth
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Proteínas (g)
-                </label>
-                <input
+                <Input
+                  label="Proteínas (g/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.proteinas}
                   onChange={(e) => setFormData({ ...formData, proteinas: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 15.5"
+                  fullWidth
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Carboidratos (g)
-                </label>
-                <input
+                <Input
+                  label="Carboidratos (g/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.carboidratos}
                   onChange={(e) => setFormData({ ...formData, carboidratos: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 30.2"
+                  fullWidth
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gorduras (g)
-                </label>
-                <input
+                <Input
+                  label="Gorduras (g/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.gorduras}
                   onChange={(e) => setFormData({ ...formData, gorduras: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 8.5"
+                  fullWidth
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fibras (g)
-                </label>
-                <input
+                <Input
+                  label="Fibras (g/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.fibras}
                   onChange={(e) => setFormData({ ...formData, fibras: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 2.1"
+                  fullWidth
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sódio (mg)
-                </label>
-                <input
+                <Input
+                  label="Sódio (mg/100g)"
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   value={formData.sodio}
                   onChange={(e) => setFormData({ ...formData, sodio: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 150"
+                  fullWidth
                 />
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Salvando...' : 'Salvar'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseModal}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+              >
+                {editingInsumo ? 'Atualizar' : 'Cadastrar'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      </div>
     </DashboardLayout>
   )
 }
+
