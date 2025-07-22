@@ -1,0 +1,389 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PerfilUsuario {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  role      String   @default("cozinheiro")
+  nome      String?
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("perfis_usuarios")
+}
+
+model CategoriaInsumo {
+  id        String   @id @default(cuid())
+  nome      String
+  descricao String?
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  insumos   Insumo[]
+
+  @@map("categorias_insumos")
+}
+
+model CategoriaReceita {
+  id             String         @id @default(cuid())
+  nome           String
+  descricao      String?
+  userId         String         @map("user_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  fichasTecnicas FichaTecnica[]
+
+  @@map("categorias_receitas")
+}
+
+model UnidadeMedida {
+  id        String   @id @default(cuid())
+  nome      String
+  simbolo   String
+  tipo      String
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  insumos   Insumo[]
+
+  @@map("unidades_medida")
+}
+
+model Insumo {
+  id                   String                @id @default(cuid())
+  nome                 String
+  marca                String?
+  fornecedor           String?
+  fornecedorId         String?               @map("fornecedor_id")
+  categoriaId          String                @map("categoria_id")
+  unidadeCompraId      String                @map("unidade_compra_id")
+  pesoLiquidoGramas    Float                 @map("peso_liquido_gramas")
+  precoUnidade         Float                 @map("preco_unidade")
+  calorias             Float?                @map("calorias_por_100g")
+  proteinas            Float?                @map("proteinas_por_100g")
+  carboidratos         Float?                @map("carboidratos_por_100g")
+  gorduras             Float?                @map("gorduras_por_100g")
+  fibras               Float?                @map("fibras_por_100g")
+  sodio                Float?                @map("sodio_por_100g")
+  userId               String                @map("user_id")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  ingredientes         Ingrediente[]
+  categoria            CategoriaInsumo       @relation(fields: [categoriaId], references: [id])
+  unidadeCompra        UnidadeMedida         @relation(fields: [unidadeCompraId], references: [id])
+  fornecedorRel        Fornecedor?           @relation(fields: [fornecedorId], references: [id])
+  movimentacoesEstoque MovimentacaoEstoque[]
+  fornecedorPrecos     FornecedorPreco[]
+
+  @@map("insumos")
+}
+
+model FichaTecnica {
+  id               String           @id @default(cuid())
+  nome             String
+  categoriaId      String           @map("categoria_id")
+  pesoFinalGramas  Float            @map("peso_final_gramas")
+  numeroPorcoes    Int              @map("numero_porcoes")
+  tempoPreparo     Int?             @map("tempo_preparo")
+  temperaturaForno Int?             @map("temperatura_forno")
+  modoPreparo      String           @map("modo_preparo")
+  nivelDificuldade String           @map("nivel_dificuldade")
+  userId           String           @map("user_id")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  categoria        CategoriaReceita @relation(fields: [categoriaId], references: [id])
+  ingredientes     Ingrediente[]
+  producoes        Producao[]
+  produtoFichas    ProdutoFichaTecnica[]
+
+  @@map("fichas_tecnicas")
+}
+
+model Ingrediente {
+  id               String       @id @default(cuid())
+  fichaTecnicaId   String       @map("ficha_tecnica_id")
+  insumoId         String       @map("insumo_id")
+  quantidadeGramas Float        @map("quantidade_gramas")
+  fichaTecnica     FichaTecnica @relation(fields: [fichaTecnicaId], references: [id], onDelete: Cascade)
+  insumo           Insumo       @relation(fields: [insumoId], references: [id])
+
+  @@map("ingredientes")
+}
+
+model Producao {
+  id                  String       @id @default(cuid())
+  fichaTecnicaId      String       @map("ficha_tecnica_id")
+  dataProducao        DateTime     @map("data_producao")
+  dataValidade        DateTime     @map("data_validade")
+  quantidadeProduzida Float        @map("quantidade_produzida")
+  lote                String
+  userId              String       @map("user_id")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  fichaTecnica        FichaTecnica @relation(fields: [fichaTecnicaId], references: [id])
+
+  @@map("producoes")
+}
+
+model MovimentacaoEstoque {
+  id           String    @id @default(cuid())
+  insumoId     String    @map("insumo_id")
+  tipo         String
+  quantidade   Float
+  motivo       String
+  lote         String?
+  dataValidade DateTime? @map("data_validade")
+  userId       String    @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  insumo       Insumo    @relation(fields: [insumoId], references: [id])
+
+  @@map("movimentacoes_estoque")
+}
+
+model Produto {
+  id          String                @id @default(cuid())
+  nome        String
+  precoVenda  Float                 @map("preco_venda")
+  margemLucro Float                 @map("margem_lucro")
+  userId      String                @map("user_id")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  produtoFichas ProdutoFichaTecnica[]
+  movimentacoesProduto MovimentacaoProduto[]
+  producoesProduto ProducaoProduto[]
+  menuItens        MenuItem[]
+
+  @@map("produtos")
+}
+
+model ProdutoFichaTecnica {
+  id               String       @id @default(cuid())
+  produtoId        String       @map("produto_id")
+  fichaTecnicaId   String       @map("ficha_tecnica_id")
+  quantidadeGramas Float        @map("quantidade_gramas")
+  produto          Produto      @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  fichaTecnica     FichaTecnica @relation(fields: [fichaTecnicaId], references: [id])
+
+  @@map("produto_ficha_tecnica")
+}
+
+model MovimentacaoProduto {
+  id           String    @id @default(cuid())
+  produtoId    String    @map("produto_id")
+  tipo         String
+  quantidade   Float
+  motivo       String
+  lote         String?
+  dataValidade DateTime? @map("data_validade")
+  userId       String    @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  produto      Produto   @relation(fields: [produtoId], references: [id])
+
+  @@map("movimentacoes_produto")
+}
+
+model ProducaoProduto {
+  id                  String    @id @default(cuid())
+  produtoId           String    @map("produto_id")
+  dataProducao        DateTime  @map("data_producao")
+  dataValidade        DateTime  @map("data_validade")
+  quantidadeProduzida Float     @map("quantidade_produzida")
+  lote                String
+  userId              String    @map("user_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  produto             Produto   @relation(fields: [produtoId], references: [id])
+
+  @@map("producoes_produto")
+}
+
+model Fornecedor {
+  id            String   @id @default(cuid())
+  nome          String
+  razaoSocial   String?  @map("razao_social")
+  cnpj          String?
+  telefone      String?
+  email         String?
+  endereco      String?
+  cidade        String?
+  estado        String?
+  cep           String?
+  contato       String?
+  observacoes   String?
+  ativo         Boolean  @default(true)
+  userId        String   @map("user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  insumos       Insumo[]
+  precos        FornecedorPreco[]
+
+  @@map("fornecedores")
+}
+
+model FornecedorPreco {
+  id           String     @id @default(cuid())
+  fornecedorId String     @map("fornecedor_id")
+  insumoId     String     @map("insumo_id")
+  preco        Float
+  dataVigencia DateTime   @map("data_vigencia")
+  ativo        Boolean    @default(true)
+  observacoes  String?
+  userId       String     @map("user_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [id])
+  insumo       Insumo     @relation(fields: [insumoId], references: [id])
+
+  @@map("fornecedor_precos")
+}
+
+model ConfiguracaoAlerta {
+  id                    String   @id @default(cuid())
+  tipo                  String   // 'estoque_baixo', 'validade_proxima', 'custo_alto'
+  itemTipo              String   @map("item_tipo") // 'insumo' ou 'produto'
+  itemId                String   @map("item_id")
+  ativo                 Boolean  @default(true)
+  limiteEstoqueBaixo    Float?   @map("limite_estoque_baixo")
+  diasAntesVencimento   Int?     @map("dias_antes_vencimento")
+  margemCustoMaxima     Float?   @map("margem_custo_maxima")
+  userId                String   @map("user_id")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("configuracoes_alerta")
+}
+
+model Notificacao {
+  id          String    @id @default(cuid())
+  tipo        String    // 'estoque_baixo', 'validade_proxima', 'custo_alto'
+  titulo      String
+  mensagem    String
+  itemTipo    String    @map("item_tipo") // 'insumo' ou 'produto'
+  itemId      String    @map("item_id")
+  itemNome    String    @map("item_nome")
+  prioridade  String    @default("media") // 'baixa', 'media', 'alta', 'critica'
+  lida        Boolean   @default(false)
+  dataLimite  DateTime? @map("data_limite") // Para alertas de validade
+  valorAtual  Float?    @map("valor_atual") // Para alertas de estoque ou custo
+  valorLimite Float?    @map("valor_limite") // Para comparação
+  userId      String    @map("user_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("notificacoes")
+}
+
+model Menu {
+  id          String     @id @default(cuid())
+  nome        String
+  descricao   String?
+  tipo        String     // 'cafe_manha', 'almoco', 'jantar', 'lanche'
+  ativo       Boolean    @default(true)
+  userId      String     @map("user_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  itens       MenuItem[]
+  periodos    MenuPeriodo[]
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id         String  @id @default(cuid())
+  menuId     String  @map("menu_id")
+  produtoId  String  @map("produto_id")
+  quantidade Int     @default(1)
+  observacoes String?
+  menu       Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  produto    Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("menu_itens")
+}
+
+model MenuPeriodo {
+  id          String   @id @default(cuid())
+  menuId      String   @map("menu_id")
+  dataInicio  DateTime @map("data_inicio")
+  dataFim     DateTime @map("data_fim")
+  tipo        String   // 'semanal', 'mensal', 'personalizado'
+  ativo       Boolean  @default(true)
+  observacoes String?
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@map("menu_periodos")
+}
+
+model RelatorioTemplate {
+  id           String   @id @default(cuid())
+  nome         String
+  tipo         String   // 'custos', 'producao', 'estoque', etc.
+  configuracao Json     // Layout, colors, fonts, etc.
+  padrao       Boolean  @default(false)
+  userId       String   @map("user_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  agendamentos RelatorioAgendamento[]
+
+  @@map("relatorio_templates")
+}
+
+model RelatorioAgendamento {
+  id              String   @id @default(cuid())
+  nome            String
+  tipo            String   // 'custos', 'producao', 'estoque', etc.
+  templateId      String?  @map("template_id")
+  formato         String   // 'pdf', 'excel'
+  frequencia      String   // 'diario', 'semanal', 'mensal'
+  diasSemana      String?  @map("dias_semana") // JSON array for weekly
+  diaMes          Int?     @map("dia_mes") // For monthly
+  horario         String   // HH:MM format
+  ativo           Boolean  @default(true)
+  proximaExecucao DateTime @map("proxima_execucao")
+  ultimaExecucao  DateTime? @map("ultima_execucao")
+  email           String?  // Optional email delivery
+  userId          String   @map("user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  template        RelatorioTemplate? @relation(fields: [templateId], references: [id])
+  execucoes       RelatorioExecucao[]
+
+  @@map("relatorio_agendamentos")
+}
+
+model RelatorioExecucao {
+  id            String   @id @default(cuid())
+  agendamentoId String   @map("agendamento_id")
+  dataExecucao  DateTime @map("data_execucao")
+  status        String   // 'sucesso', 'erro', 'processando'
+  arquivo       String?  // File path or URL
+  erro          String?
+  userId        String   @map("user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  agendamento   RelatorioAgendamento @relation(fields: [agendamentoId], references: [id])
+
+  @@map("relatorio_execucoes")
+}
+
+model AuditoriaAcao {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  acao      String   // 'create', 'update', 'delete', 'view'
+  modulo    String   // 'insumos', 'fichas-tecnicas', 'produtos', etc.
+  itemId    String?  @map("item_id")
+  itemTipo  String?  @map("item_tipo")
+  detalhes  Json?    // Additional details about the action
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("auditoria_acoes")
+}
